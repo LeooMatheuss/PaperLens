@@ -165,10 +165,10 @@ export class NarrationEngine implements INarrationEngine {
   // --- Options ---
   setSpeed(rate: number): void {
     this.rate = Math.max(0.5, Math.min(4, rate));
-    // If currently playing, restart current chunk with new rate
-    if (this.active && !this.paused) {
+    if (this.active && !this.paused && this.currentTokenId) {
       const chunkIdx = this.currentChunkIdx;
       speechSynthesis.cancel();
+      this.currentChunkIdx = chunkIdx;
       this.speakChunk(chunkIdx);
     }
   }

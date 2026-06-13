@@ -233,8 +233,8 @@ export function useTextHighlight() {
       }, MANUAL_SCROLL_COOLDOWN_MS);
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    return () => window.removeEventListener('scroll', handleScroll, true);
   }, [status]);
 
   /**

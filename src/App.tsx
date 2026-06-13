@@ -5,6 +5,7 @@ import { useNarrationStore } from './store/narrationStore';
 import { useNarration } from './hooks/useNarration';
 import { useTextHighlight } from './hooks/useTextHighlight';
 import { useSearchHighlight } from './hooks/useSearchHighlight';
+import { indexFullDocument } from './hooks/useDocumentIndex';
 import { pageRenderer } from './hooks/usePDFRenderer';
 import { documentLibrary, type StoredDocument } from './engine/DocumentLibrary';
 import { narrationEngine } from './hooks/useNarration';
@@ -34,6 +35,7 @@ export default function App() {
   const setPage = useReaderStore((s) => s.setPage);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cleanupIndexRef = useRef<(() => void) | null>(null);
   const narration = useNarration();
   useTextHighlight();
   useSearchHighlight();
@@ -50,6 +52,8 @@ export default function App() {
         const doc = await pageRenderer.loadDocument(file);
         setDocument(doc);
         setFileName(file.name);
+        cleanupIndexRef.current?.();
+        cleanupIndexRef.current = indexFullDocument(await file.arrayBuffer());
         setViewMode('reader');
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : 'Erro ao carregar PDF';
@@ -74,6 +78,13 @@ export default function App() {
     [handleFile]
   );
 
+  useEffect(() => {
+    return () => {
+      cleanupIndexRef.current?.();
+      cleanupIndexRef.current = null;
+    };
+  }, []);
+
   // Handle opening document from library
   const handleOpenFromLibrary = useCallback(async (storedDoc: StoredDocument) => {
     setLoading(true);
@@ -85,12 +96,22 @@ export default function App() {
       const doc = await pageRenderer.loadDocument(file);
       setDocument(doc);
       setFileName(storedDoc.name);
+      cleanupIndexRef.current?.();
+      cleanupIndexRef.current = indexFullDocument(storedDoc.pdfData);
       setDocumentId(storedDoc.id);
       setPage(storedDoc.lastPage);
-      
-      // If there's a saved token position, restore it
+
       if (storedDoc.lastTokenId) {
-        narrationEngine.seekToToken(storedDoc.lastTokenId);
+        const pendingTokenId = storedDoc.lastTokenId;
+        const pageIndex = storedDoc.lastPage - 1;
+        const unsubscribe = useReaderStore.subscribe((state) => {
+          const pageTokens = state.pageTokensMap.get(pageIndex)?.tokens ?? [];
+          if (pageTokens.some((token) => token.id === pendingTokenId)) {
+            narrationEngine.seekToToken(pendingTokenId);
+            narrationEngine.pause();
+            unsubscribe();
+          }
+        });
       }
       
       setViewMode('reader');

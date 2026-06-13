@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { usePDFRenderer, pageRenderer } from '../../hooks/usePDFRenderer';
 import { useNarrationStore } from '../../store/narrationStore';
 import { useReaderStore } from '../../store/readerStore';
+import { drawCachedPage, pageRenderCache } from '../../engine/PageRenderCache';
 import TextLayer from './TextLayer';
 import WordOverlay from './WordOverlay';
 
@@ -33,8 +34,18 @@ export default function PageCanvas({ pageNumber, isVisible = true }: PageCanvasP
     setRendering(true);
     setError(null);
 
+    const cached = pageRenderCache.get(pageNumber);
+    if (cached) {
+      drawCachedPage(cached, canvas);
+      setRendering(false);
+      return;
+    }
+
     renderPage(pageNumber, canvas)
-      .then(() => setRendering(false))
+      .then(async () => {
+        await pageRenderCache.set(pageNumber, canvas);
+        setRendering(false);
+      })
       .catch((err) => {
         if (err instanceof Error && !err.message.includes('cancelled')) {
           setError(err.message);
