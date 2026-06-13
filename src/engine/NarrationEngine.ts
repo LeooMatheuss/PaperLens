@@ -93,6 +93,8 @@ export class NarrationEngine implements INarrationEngine {
     this.active = true;
     this.paused = false;
     this.currentChunkIdx = 0;
+    this.currentPage = 1;
+    this.currentTokenId = null;
     this.speakChunk(0);
   }
 
@@ -122,10 +124,13 @@ export class NarrationEngine implements INarrationEngine {
   seekToToken(tokenId: string): void {
     const chunkIdx = this.tokenIdToChunkIdx.get(tokenId);
     if (chunkIdx === undefined) return;
+    const token = this.tokens.find((t) => t.id === tokenId);
     speechSynthesis.cancel();
     this.active = true;
     this.paused = false;
     this.currentChunkIdx = chunkIdx;
+    this.currentPage = token?.pageNum ?? this.currentPage;
+    this.currentTokenId = tokenId;
     this.speakChunk(chunkIdx);
   }
 
@@ -222,6 +227,9 @@ export class NarrationEngine implements INarrationEngine {
 
     const chunk = this.chunks[idx];
     const utt = new SpeechSynthesisUtterance(chunk.text);
+    if (idx + 1 < this.chunks.length) {
+      this.preloadChunk(idx + 1);
+    }
 
     if (this.voice) utt.voice = this.voice;
     utt.rate = this.rate;
@@ -318,6 +326,13 @@ export class NarrationEngine implements INarrationEngine {
   }
 
   // --- Chunk building: split by sentence, max 200 tokens ---
+  private preloadChunk(idx: number): void {
+    if (idx < 0 || idx >= this.chunks.length) return;
+    const chunk = this.chunks[idx];
+    if (!chunk) return;
+    void new SpeechSynthesisUtterance(chunk.text);
+  }
+
   private buildChunks(tokens: TextToken[]): Chunk[] {
     const chunks: Chunk[] = [];
     let currentTokens: TextToken[] = [];

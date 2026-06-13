@@ -29,13 +29,13 @@ export default function PerformancePanel() {
   });
 
   const frameCountRef = useRef(0);
-  const lastTimeRef = useRef(performance.now());
+  const lastTimeRef = useRef(0);
   const renderTimesRef = useRef<number[]>([]);
   const rafRef = useRef<number | undefined>(undefined);
   const totalPages = useReaderStore((s) => s.totalPages);
 
   // FPS counter
-  const updateFPS = useCallback(() => {
+  const updateFPS = useCallback(function tick() {
     frameCountRef.current++;
     const now = performance.now();
     const elapsed = now - lastTimeRef.current;
@@ -65,7 +65,7 @@ export default function PerformancePanel() {
       });
     }
 
-    rafRef.current = requestAnimationFrame(updateFPS);
+    rafRef.current = requestAnimationFrame(tick);
   }, [totalPages]);
 
   // Track render times
@@ -88,6 +88,7 @@ export default function PerformancePanel() {
   useEffect(() => {
     if (!IS_DEV) return;
 
+    lastTimeRef.current = performance.now();
     rafRef.current = requestAnimationFrame(updateFPS);
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -174,23 +175,4 @@ export default function PerformancePanel() {
       )}
     </div>
   );
-}
-
-// Keyboard shortcut to toggle panel
-export function usePerformancePanelShortcut() {
-  useEffect(() => {
-    if (!IS_DEV) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'p' && e.ctrlKey) {
-        e.preventDefault();
-        // Find and click the toggle button
-        const btn = document.querySelector('[data-perf-toggle]') as HTMLButtonElement;
-        btn?.click();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 }

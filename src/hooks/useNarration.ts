@@ -10,6 +10,7 @@ export const narrationEngine = new NarrationEngine();
 
 export function useNarration() {
   const engineRef = useRef<NarrationEngine>(narrationEngine);
+  const userGestureRef = useRef(false);
 
   const pageTokensMap = useReaderStore((s) => s.pageTokensMap);
   const setPage = useReaderStore((s) => s.setPage);
@@ -78,6 +79,34 @@ export function useNarration() {
     return () => engine.stop();
   }, [setStatus, setCurrentTokenId, setCurrentPage, setProgress, addSpokenToken, setPage]);
 
+  useEffect(() => {
+    const markUserGesture = () => {
+      userGestureRef.current = true;
+    };
+
+    window.addEventListener('pointerdown', markUserGesture, true);
+    window.addEventListener('touchstart', markUserGesture, true);
+    window.addEventListener('keydown', markUserGesture, true);
+
+    return () => {
+      window.removeEventListener('pointerdown', markUserGesture, true);
+      window.removeEventListener('touchstart', markUserGesture, true);
+      window.removeEventListener('keydown', markUserGesture, true);
+    };
+  }, []);
+
+  const canStartNarration = useCallback(() => {
+    const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent);
+    if (!isIOSSafari) return true;
+
+    if (!userGestureRef.current) {
+      useNarrationStore.getState().setWarning('Toque ou use o teclado para habilitar a narração no Safari/iOS.');
+      return false;
+    }
+
+    return true;
+  }, []);
+
   // Load voices
   useEffect(() => {
     const loadVoices = () => {
@@ -101,6 +130,7 @@ export function useNarration() {
 
   const play = useCallback(() => {
     const { setWarning } = useNarrationStore.getState();
+    if (!canStartNarration()) return;
     if (!engineRef.current.hasText) {
       setWarning(
         'Este PDF não possui texto extraível (provavelmente digitalizado/escaneado). A narração não está disponível.'
@@ -111,7 +141,7 @@ export function useNarration() {
     setWarning(null);
     engineRef.current.play();
     setStatus('playing');
-  }, [setStatus]);
+  }, [canStartNarration, setStatus]);
 
   const pause = useCallback(() => {
     engineRef.current.pause();
@@ -119,9 +149,10 @@ export function useNarration() {
   }, [setStatus]);
 
   const resume = useCallback(() => {
+    if (!canStartNarration()) return;
     engineRef.current.resume();
     setStatus('playing');
-  }, [setStatus]);
+  }, [canStartNarration, setStatus]);
 
   const stop = useCallback(() => {
     engineRef.current.stop();

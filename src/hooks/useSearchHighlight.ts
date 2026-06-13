@@ -38,8 +38,10 @@ export function useSearchHighlight() {
     }
 
     rafRef.current = requestAnimationFrame(() => {
+      const currentHighlights = Array.from(appliedHighlightsRef.current);
+
       // Remove old highlights that are no longer in the set
-      for (const tokenId of appliedHighlightsRef.current) {
+      for (const tokenId of currentHighlights) {
         if (!highlightedTokenIds.has(tokenId) || !isOpen) {
           const el = findTokenElement(tokenId);
           if (el) {
@@ -91,23 +93,26 @@ export function useSearchHighlight() {
 
   // Cleanup on unmount
   useEffect(() => {
+    const highlights = Array.from(appliedHighlightsRef.current);
+
     return () => {
       // Remove all search highlights
-      for (const tokenId of appliedHighlightsRef.current) {
+      for (const tokenId of highlights) {
         const el = findTokenElement(tokenId);
         if (el) {
           el.classList.remove('search-highlight', 'search-highlight-current');
         }
       }
-      appliedHighlightsRef.current.clear();
     };
   }, [findTokenElement]);
 
   // Clear highlights when search panel closes
   useEffect(() => {
+    const highlights = Array.from(appliedHighlightsRef.current);
+
     if (!isOpen) {
       // Remove all search highlights
-      for (const tokenId of appliedHighlightsRef.current) {
+      for (const tokenId of highlights) {
         const el = findTokenElement(tokenId);
         if (el) {
           el.classList.remove('search-highlight', 'search-highlight-current');

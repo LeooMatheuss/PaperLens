@@ -37,8 +37,11 @@ export default function PageCanvas({ pageNumber, isVisible = true }: PageCanvasP
     const cached = pageRenderCache.get(pageNumber);
     if (cached) {
       drawCachedPage(cached, canvas);
-      setRendering(false);
-      return;
+      const timeout = window.setTimeout(() => setRendering(false), 0);
+      return () => {
+        window.clearTimeout(timeout);
+        pageRenderer.cancelRender(pageNumber);
+      };
     }
 
     renderPage(pageNumber, canvas)

@@ -19,8 +19,16 @@ export function indexFullDocument(
       | { type: 'error'; error: string };
 
     if (message.type === 'loaded') {
-      worker.postMessage({ type: 'extractBatch', pageNums: Array.from({ length: message.totalPages }, (_, i) => i + 1) });
-      worker.postMessage({ type: 'detectHeaderFooter' });
+      const scheduleBatch = () => {
+        worker.postMessage({ type: 'extractBatch', pageNums: Array.from({ length: message.totalPages }, (_, i) => i + 1) });
+        worker.postMessage({ type: 'detectHeaderFooter' });
+      };
+
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(() => scheduleBatch(), { timeout: 1000 });
+      } else {
+        setTimeout(scheduleBatch, 0);
+      }
       return;
     }
 

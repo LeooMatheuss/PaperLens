@@ -26,13 +26,35 @@ export function useSearch() {
   const isOpen = useSearchStore((s) => s.isOpen);
   
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idleIndexRef = useRef<number | null>(null);
 
-  // Index pages when text extraction completes
+  // Index pages when text extraction completes, but do it in idle time.
   useEffect(() => {
     const pages = Array.from(pageTokensMap.values());
-    if (pages.length > 0) {
+    if (pages.length === 0) return;
+
+    searchEngine.clear();
+
+    const runIndex = () => {
       searchEngine.indexPages(pages);
+    };
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      idleIndexRef.current = window.requestIdleCallback(() => runIndex(), { timeout: 1000 });
+    } else {
+      debounceTimerRef.current = setTimeout(runIndex, 0);
     }
+
+    return () => {
+      if (idleIndexRef.current !== null) {
+        window.cancelIdleCallback?.(idleIndexRef.current);
+        idleIndexRef.current = null;
+      }
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
+      }
+    };
   }, [pageTokensMap]);
 
   // Perform search when query or options change
@@ -50,7 +72,6 @@ export function useSearch() {
       return;
     }
 
-    // Debounced search
     debounceTimerRef.current = setTimeout(() => {
       const searchResults = searchEngine.search(query, options);
       setResults(searchResults);

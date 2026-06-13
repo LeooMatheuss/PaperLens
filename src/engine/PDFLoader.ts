@@ -30,14 +30,32 @@ export class PageRenderer {
 
     let data: ArrayBuffer | string;
     if (source instanceof File) {
-      // Validate PDF signature
       const header = await source.slice(0, 5).text();
       if (!header.startsWith('%PDF-')) {
-        throw new Error('Arquivo inválido: não é um PDF.');
+        throw new Error('Arquivo inválido: o arquivo selecionado não é um PDF válido.');
       }
       data = await source.arrayBuffer();
     } else {
-      data = source;
+      try {
+        const response = await fetch(source, { method: 'GET' });
+        if (!response.ok) {
+          throw new Error(`Falha ao carregar o PDF remoto (${response.status}).`);
+        }
+        const contentType = response.headers.get('content-type') ?? '';
+        if (!contentType.toLowerCase().includes('pdf')) {
+          const blob = await response.blob();
+          const header = await blob.slice(0, 5).text();
+          if (!header.startsWith('%PDF-')) {
+            throw new Error('URL inválida: o recurso não aponta para um PDF válido.');
+          }
+        }
+        data = await response.arrayBuffer();
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new Error('Não foi possível validar a URL do PDF.', { cause: error });
+        }
+        throw new Error('Não foi possível validar a URL do PDF.', { cause: error });
+      }
     }
 
     const loadingTask = pdfjsLib.getDocument(

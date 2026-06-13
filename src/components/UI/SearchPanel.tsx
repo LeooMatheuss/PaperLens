@@ -20,23 +20,18 @@ export default function SearchPanel() {
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [showOptions, setShowOptions] = useState(false);
-  const [showResults, setShowResults] = useState(false);
+  const showResults = isOpen && query.trim().length > 0;
 
   // Focus input when opened
   useEffect(() => {
     if (isOpen) {
       inputRef.current?.focus();
-      setShowResults(query.length > 0);
-    } else {
-      setShowResults(false);
     }
-  }, [isOpen, query]);
+  }, [isOpen]);
 
   // Handle input change with debounce
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setQuery(value);
-    setShowResults(value.length > 0);
+    setQuery(e.target.value);
   }, [setQuery]);
 
   // Close and clear
@@ -98,7 +93,7 @@ export default function SearchPanel() {
             }
             if (e.key === 'Escape') {
               if (showResults && query) {
-                setShowResults(false);
+                setQuery('');
               } else {
                 handleClose();
               }
@@ -206,7 +201,6 @@ export default function SearchPanel() {
                     key={`${result.tokenId}-${index}`}
                     onClick={() => {
                       navigateToResult(index);
-                      setShowResults(false);
                     }}
                     className={`cursor-pointer px-3 py-2 transition ${
                       index === currentResultIndex
@@ -234,7 +228,6 @@ export default function SearchPanel() {
                   <button
                     onClick={() => {
                       narrateFromHere();
-                      setShowResults(false);
                     }}
                     className="flex w-full items-center justify-center gap-2 rounded-md bg-blue-600/20 py-2 text-[11px] font-medium text-blue-400 transition hover:bg-blue-600/30"
                   >

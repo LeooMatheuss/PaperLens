@@ -61,6 +61,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Strategy for PDF documents and remote assets
+  if (request.destination === 'document' || url.pathname.toLowerCase().endsWith('.pdf')) {
+    event.respondWith(staleWhileRevalidate(request));
+    return;
+  }
+
   // Strategy for IndexedDB operations (pass through)
   if (url.pathname.includes('/api/')) {
     return;

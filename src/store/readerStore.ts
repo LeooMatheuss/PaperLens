@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import type { PageTokens } from '../engine/TextExtractor';
+import { pageRenderCache } from '../engine/PageRenderCache';
 
 export type ThemeMode = 'dark' | 'light' | 'sepia';
 export type FitMode = 'page' | 'width' | 'custom';
@@ -66,14 +67,16 @@ const initialState = {
 export const useReaderStore = create<ReaderState>((set) => ({
   ...initialState,
 
-  setDocument: (document) =>
+  setDocument: (document) => {
+    pageRenderCache.clear();
     set({
       document,
       totalPages: document.numPages,
       error: null,
       currentPage: 1,
       pageTokensMap: new Map(),
-    }),
+    });
+  },
 
   setPage: (currentPage) => set({ currentPage }),
   setScale: (scale) => set({ scale, fitMode: 'custom' }),
@@ -96,5 +99,8 @@ export const useReaderStore = create<ReaderState>((set) => ({
   setTheme: (theme) => set({ theme }),
   setViewMode: (viewMode) => set({ viewMode }),
 
-  reset: () => set({ ...initialState, pageTokensMap: new Map() }),
+  reset: () => {
+    pageRenderCache.clear();
+    set({ ...initialState, pageTokensMap: new Map() });
+  },
 }));

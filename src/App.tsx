@@ -7,6 +7,7 @@ import { useTextHighlight } from './hooks/useTextHighlight';
 import { useSearchHighlight } from './hooks/useSearchHighlight';
 import { indexFullDocument } from './hooks/useDocumentIndex';
 import { pageRenderer } from './hooks/usePDFRenderer';
+import { pageRenderCache } from './engine/PageRenderCache';
 import { documentLibrary, type StoredDocument } from './engine/DocumentLibrary';
 import { narrationEngine } from './hooks/useNarration';
 import Toolbar from './components/UI/Toolbar';
@@ -45,6 +46,7 @@ export default function App() {
       setLoading(true);
       setError(null);
       try {
+        pageRenderCache.clear();
         // Save to library first
         const docId = await documentLibrary.saveDocument(file);
         setDocumentId(docId);
@@ -90,6 +92,12 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
+      pageRenderCache.clear();
+      const shouldResume = storedDoc.progress > 0 && (storedDoc.lastPage > 1 || storedDoc.lastTokenId);
+      const resumeChoice = shouldResume
+        ? window.confirm(`Retomar a leitura de ${storedDoc.name} na página ${storedDoc.lastPage}?`)
+        : false;
+
       // Create a File object from the stored ArrayBuffer
       const file = new File([storedDoc.pdfData], storedDoc.name, { type: 'application/pdf' });
       
@@ -99,9 +107,12 @@ export default function App() {
       cleanupIndexRef.current?.();
       cleanupIndexRef.current = indexFullDocument(storedDoc.pdfData);
       setDocumentId(storedDoc.id);
-      setPage(storedDoc.lastPage);
 
-      if (storedDoc.lastTokenId) {
+      if (resumeChoice) {
+        setPage(storedDoc.lastPage);
+      }
+
+      if (resumeChoice && storedDoc.lastTokenId) {
         const pendingTokenId = storedDoc.lastTokenId;
         const pageIndex = storedDoc.lastPage - 1;
         const unsubscribe = useReaderStore.subscribe((state) => {
@@ -112,6 +123,8 @@ export default function App() {
             unsubscribe();
           }
         });
+
+        window.setTimeout(() => unsubscribe(), 15000);
       }
       
       setViewMode('reader');
@@ -121,7 +134,7 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }, [setDocument, setFileName, setDocumentId, setPage, setViewMode]);
+  }, [setDocument, setFileName, setDocumentId, setPage, setViewMode, setError, setLoading]);
 
   // Save progress when page changes (debounced)
   useEffect(() => {
@@ -200,10 +213,7 @@ export default function App() {
       <div className="relative flex flex-1 overflow-hidden">
         {viewMode === 'library' ? (
           // Library view
-          <DocumentLibrary 
-            onOpenDocument={handleOpenFromLibrary} 
-            onAddDocument={handleOpenFile} 
-          />
+          <DocumentLibrary onOpenDocument={handleOpenFromLibrary} />
         ) : (
           // Reader view
           <>

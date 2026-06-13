@@ -277,6 +277,7 @@ export default function PageVirtualizer() {
   return (
     <div
       ref={containerRef}
+      data-pdf-scroll-container
       className="flex-1 overflow-y-auto overflow-x-auto bg-neutral-900/50 p-6"
     >
       <div className="flex flex-col items-center gap-6">
@@ -327,15 +328,4 @@ export default function PageVirtualizer() {
       </div>
     </div>
   );
-}
-
-// --- Export utilities for performance metrics ---
-export function getVirtualizerStats(): {
-  cacheStats: ReturnType<typeof pageRenderCache.getStats>;
-  totalPages: number;
-} {
-  return {
-    cacheStats: pageRenderCache.getStats(),
-    totalPages: useReaderStore.getState().totalPages,
-  };
 }

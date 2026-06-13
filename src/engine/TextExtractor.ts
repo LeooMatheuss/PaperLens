@@ -82,8 +82,8 @@ export async function extractPage(
     const itemHeight = Math.abs(tx[3]) || Math.abs(tx[0]);
     const itemWidth = item.width;
 
-    // Detect line break: significant y change
-    if (rawTokens.length > 0 && Math.abs(yAbs - prevY) > itemHeight * 0.5) {
+    // Detect line break: significant y change (use 1.5x the item height to avoid noisy splits)
+    if (rawTokens.length > 0 && Math.abs(yAbs - prevY) > itemHeight * 1.5) {
       lineBreaks.push(rawTokens.length);
     }
     prevY = yAbs;
@@ -133,7 +133,7 @@ export async function extractPage(
   const finalLineBreaks: number[] = [];
   for (let i = 1; i < tokens.length; i++) {
     const dy = Math.abs(tokens[i].bbox.y - tokens[i - 1].bbox.y);
-    if (dy > tokens[i].bbox.height * 0.5) {
+    if (dy > tokens[i].bbox.height * 1.5) {
       finalLineBreaks.push(i);
     }
   }

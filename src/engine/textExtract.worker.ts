@@ -117,7 +117,8 @@ async function extractPageCached(pageNum: number): Promise<PageTextContent> {
 
 function schedulePrefetch(currentPage: number) {
   if (prefetchTimeout) clearTimeout(prefetchTimeout);
-  prefetchTimeout = setTimeout(async () => {
+
+  const run = async () => {
     if (!doc) return;
     const totalPages = doc.numPages;
     for (let i = 1; i <= 3; i++) {
@@ -130,5 +131,18 @@ function schedulePrefetch(currentPage: number) {
         }
       }
     }
-  }, 100); // slight delay to not block current work
+  };
+
+  if ('requestIdleCallback' in self) {
+    prefetchTimeout = self.setTimeout(() => {
+      self.requestIdleCallback(() => {
+        void run();
+      });
+    }, 100) as unknown as ReturnType<typeof setTimeout>;
+    return;
+  }
+
+  prefetchTimeout = setTimeout(() => {
+    void run();
+  }, 100);
 }

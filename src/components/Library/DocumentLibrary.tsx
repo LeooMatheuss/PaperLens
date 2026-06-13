@@ -8,13 +8,12 @@ import { documentLibrary, type StoredDocument } from '../../engine/DocumentLibra
 
 interface DocumentLibraryProps {
   onOpenDocument: (doc: StoredDocument) => void;
-  onAddDocument: () => void;
 }
 
 type SortOption = 'date' | 'name' | 'progress';
 type ViewMode = 'grid' | 'list';
 
-export default function DocumentLibrary({ onOpenDocument, onAddDocument }: DocumentLibraryProps) {
+export default function DocumentLibrary({ onOpenDocument }: DocumentLibraryProps) {
   const [documents, setDocuments] = useState<StoredDocument[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('date');
@@ -52,8 +51,34 @@ export default function DocumentLibrary({ onOpenDocument, onAddDocument }: Docum
   }, [searchQuery, sortBy]);
 
   useEffect(() => {
-    loadDocuments();
-  }, [loadDocuments]);
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        const docs = searchQuery.trim()
+          ? await documentLibrary.searchDocuments(searchQuery)
+          : await documentLibrary.listDocuments(sortBy);
+
+        if (!cancelled) {
+          setDocuments(docs);
+          const usage = await documentLibrary.getStorageUsage();
+          if (!cancelled) setStorageUsage(usage);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load documents');
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    void run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [searchQuery, sortBy]);
 
   // Handle file drop/add
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {

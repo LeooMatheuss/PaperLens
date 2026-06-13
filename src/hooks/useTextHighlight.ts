@@ -164,7 +164,10 @@ export function useTextHighlight() {
   /**
    * Smart auto-scroll to keep token in comfort zone
    */
-  const scrollToToken = useCallback((tokenId: string, behavior: ScrollBehavior = 'smooth') => {
+  const scrollToToken = useCallback(function scrollToTokenImpl(
+    tokenId: string,
+    behavior: ScrollBehavior = 'smooth'
+  ) {
     if (!isAutoScrollEnabled()) return;
 
     // Skip if token is already visible (IntersectionObserver)
@@ -177,7 +180,7 @@ export function useTextHighlight() {
         clearTimeout(scrollDebounceRef.current);
       }
       scrollDebounceRef.current = setTimeout(() => {
-        scrollToToken(tokenId, behavior);
+        scrollToTokenImpl(tokenId, behavior);
       }, SCROLL_DEBOUNCE_MS);
       return;
     }
@@ -216,25 +219,30 @@ export function useTextHighlight() {
    */
   useEffect(() => {
     const handleScroll = () => {
-      // Ignore if it's a programmatic scroll
       if (isProgrammaticScrollRef.current) return;
-
-      // Ignore if not playing
       if (status !== 'playing') return;
 
-      // Clear existing timeout
       if (manualScrollTimeoutRef.current) {
         clearTimeout(manualScrollTimeoutRef.current);
       }
 
-      // Set cooldown for manual scroll
       manualScrollTimeoutRef.current = setTimeout(() => {
         manualScrollTimeoutRef.current = null;
       }, MANUAL_SCROLL_COOLDOWN_MS);
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
-    return () => window.removeEventListener('scroll', handleScroll, true);
+    const scrollContainer = document.querySelector('[data-pdf-scroll-container]') as HTMLElement | null;
+    const targets = [window, scrollContainer].filter(Boolean) as EventTarget[];
+
+    targets.forEach((target) => {
+      target.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    });
+
+    return () => {
+      targets.forEach((target) => {
+        target.removeEventListener('scroll', handleScroll, true);
+      });
+    };
   }, [status]);
 
   /**

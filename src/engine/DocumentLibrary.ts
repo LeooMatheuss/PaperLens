@@ -4,6 +4,10 @@
  */
 
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
+import * as pdfjsLib from 'pdfjs-dist';
+import workerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
 const DB_NAME = 'paperlens-library';
 const DB_VERSION = 1;
@@ -79,9 +83,25 @@ class DocumentLibrary {
    * Generate thumbnail from PDF (first page)
    */
   private async generateThumbnail(pdfData: ArrayBuffer): Promise<Blob | null> {
-    // This will be implemented separately as it requires PDF.js rendering
-    // For now, return null - thumbnail can be generated async
-    return null;
+    try {
+      const doc = await pdfjsLib.getDocument({ data: new Uint8Array(pdfData) }).promise;
+      const page = await doc.getPage(1);
+      const viewport = page.getViewport({ scale: 0.18 });
+      const canvas = document.createElement('canvas');
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.ceil(viewport.width * ratio);
+      canvas.height = Math.ceil(viewport.height * ratio);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/png', 0.92));
+      doc.destroy();
+      return blob;
+    } catch (error) {
+      console.warn('Thumbnail generation failed:', error);
+      return null;
+    }
   }
 
   /**
