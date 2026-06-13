@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(115, 115, 115, 0.3) transparent;
+  }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(115, 115, 115, 0.3);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(115, 115, 115, 0.5);
+  }
+}
+
+/* Narration highlight */
+.word-token {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 2px;
+  transition: background-color 0.15s ease;
+}
+.word-token.active {
+  background-color: rgba(250, 204, 21, 0.4);
+  box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.25);
+}
+.word-token.spoken {
+  background-color: rgba(139, 92, 246, 0.15);
+}
+
+/* STEP 4: Precise text highlighting */
+.word-highlight {
+  background: rgba(250, 204, 21, 0.85) !important;   /* amarelo */
+  border-radius: 2px;
+  color: #1a1a1a !important;
+  transition: background 0.05s ease;
+  text-shadow: none !important;
+}
+
+.line-highlight {
+  background: rgba(250, 204, 21, 0.15);
+  border-radius: 2px;
+  transition: background 0.1s ease;
+}
+
+/* Modo escuro */
+.dark .word-highlight {
+  background: rgba(234, 179, 8, 0.9) !important;
+  color: #0a0a0a !important;
+}
+
+.dark .line-highlight {
+  background: rgba(234, 179, 8, 0.2);
+}
+
+/* Karaoke mode (P2) - Optional styles */
+.karaoke-mode .line-highlight {
+  font-weight: 500;
+}
+
+.karaoke-mode .word-spoken {
+  opacity: 0.4;
+  transition: opacity 0.3s ease;
+}
+
+/* STEP 6: Search highlight - blue color (distinct from narration yellow) */
+.search-highlight {
+  background: rgba(59, 130, 246, 0.6) !important;   /* azul */
+  border-radius: 2px;
+  transition: background 0.1s ease;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3);
+}
+
+.search-highlight-current {
+  background: rgba(37, 99, 235, 0.85) !important;   /* azul escuro */
+  border-radius: 2px;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5), 0 0 8px rgba(37, 99, 235, 0.4);
+  color: #ffffff !important;
+  font-weight: 500;
+  z-index: 10;
+}
+
+/* Dark mode adjustments */
+.dark .search-highlight {
+  background: rgba(96, 165, 250, 0.5) !important;
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.4);
+}
+
+.dark .search-highlight-current {
+  background: rgba(59, 130, 246, 0.9) !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.6), 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+/* Hover effect for search results */
+.search-highlight:hover {
+  background: rgba(59, 130, 246, 0.75) !important;
+}
+
+/* Ensure search and narration highlights don't conflict */
+.word-highlight.search-highlight {
+  /* When both are applied, blend the colors */
+  background: linear-gradient(
+    135deg,
+    rgba(250, 204, 21, 0.85) 0%,
+    rgba(59, 130, 246, 0.6) 100%
+  ) !important;
+}
+
+.word-highlight.search-highlight-current {
+  /* Current search result takes precedence over narration */
+  background: rgba(37, 99, 235, 0.9) !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5), 0 0 8px rgba(37, 99, 235, 0.4);
+}
