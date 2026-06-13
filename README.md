@@ -1,73 +1,52 @@
-# React + TypeScript + Vite
+# PaperLens
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+PaperLens é um leitor de PDF moderno com narração por voz, busca em texto e biblioteca offline para ajudar na leitura e revisão de documentos de forma mais prática.
 
-Currently, two official plugins are available:
+## O que o projeto faz
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Abre arquivos PDF diretamente no navegador
+- Reproduz a leitura em voz alta com controles de reprodução
+- Busca texto dentro do documento e destaca os resultados
+- Mantém histórico e progresso dos documentos lidos
+- Funciona como uma aplicação web progressiva (PWA) com experiência próxima de app
 
-## React Compiler
+## Principais recursos
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Leitura de PDF com navegação por páginas
+- Narração com controle de velocidade, volume e voz
+- Busca full-text com destaque visual
+- Biblioteca local para documentos salvos
+- Interface otimizada para produtividade e estudo
 
-## Expanding the ESLint configuration
+## Stack técnica
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- React + TypeScript
+- Vite
+- PDF.js
+- Zustand
+- IndexedDB para armazenamento local
+- Tailwind CSS
+- Framer Motion
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Como executar
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+1. Instale as dependências
+   ```bash
+   npm install
+   ```
+2. Inicie o ambiente de desenvolvimento
+   ```bash
+   npm run dev
+   ```
+3. Para gerar a versão de produção
+   ```bash
+   npm run build
+   ```
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Objetivo do projeto
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+PaperLens foi pensado para quem deseja ler PDFs com mais conforto, ouvir o conteúdo em voz alta e continuar de onde parou, sem depender de ferramentas externas.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Descrição curta
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Leitor de PDF com narração por voz, busca inteligente e biblioteca offline para leitura e revisão de documentos.

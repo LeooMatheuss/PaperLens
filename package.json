@@ -1,6 +1,7 @@
 {
   "name": "paperlens",
   "private": true,
+  "description": "Leitor de PDF com narração por voz, busca em texto e biblioteca offline.",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
